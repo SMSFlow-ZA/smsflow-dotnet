@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackageId>SmsFlow</PackageId>
+    <Authors>SMSFlow</Authors>
+    <Description>.NET client library for the SMSFlow HTTPS API.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/smsflow/smsflow-dotnet</RepositoryUrl>
+    <PackageTags>sms;sms-api;smsflow;notifications</PackageTags>
+  </PropertyGroup>
+</Project>
