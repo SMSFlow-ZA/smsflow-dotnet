@@ -3,6 +3,7 @@ using SmsFlow;
 var clientId = Environment.GetEnvironmentVariable("SMSFLOW_CLIENT_ID");
 var clientSecret = Environment.GetEnvironmentVariable("SMSFLOW_CLIENT_SECRET");
 var destination = Environment.GetEnvironmentVariable("SMSFLOW_DESTINATION");
+var baseUrl = Environment.GetEnvironmentVariable("SMSFLOW_BASE_URL");
 
 if (string.IsNullOrWhiteSpace(clientId) ||
     string.IsNullOrWhiteSpace(clientSecret) ||
@@ -15,8 +16,12 @@ if (string.IsNullOrWhiteSpace(clientId) ||
 var client = new SmsFlowClient(new SmsFlowClientOptions
 {
     ClientId = clientId,
-    ClientSecret = clientSecret
+    ClientSecret = clientSecret,
+    BaseUri = string.IsNullOrWhiteSpace(baseUrl) ? new Uri("https://portal.smsflow.co.za/") : new Uri(baseUrl)
 });
+
+var runId = $"{Guid.NewGuid():N}"[..12];
+var sentAt = DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
 var result = await client.SendSmsAsync(new SendSmsRequest
 {
@@ -26,7 +31,7 @@ var result = await client.SendSmsAsync(new SendSmsRequest
         new SmsMessage
         {
             Destination = destination,
-            Content = "Your SMSFlow .NET SDK test message was sent successfully."
+            Content = $"Your SMSFlow .NET SDK test message was sent successfully. Run {runId} at {sentAt}."
         }
     ]
 });
