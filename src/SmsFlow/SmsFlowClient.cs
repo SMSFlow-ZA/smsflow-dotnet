@@ -56,15 +56,15 @@ public sealed class SmsFlowClient
         var token = await GetTokenAsync(cancellationToken).ConfigureAwait(false);
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/integration/BulkMessages");
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        httpRequest.Content = JsonContent.Create(new
+        httpRequest.Content = JsonContent.Create(new Dictionary<string, object?>
         {
-            SendOptions = new
+            ["SendOptions"] = new
             {
                 startDeliveryUtc = request.StartDeliveryUtc?.UtcDateTime,
                 campaignName = request.CampaignName,
                 checkOptOuts = request.CheckOptOuts
             },
-            messages = request.Messages.Select(message => new
+            ["messages"] = request.Messages.Select(message => new
             {
                 content = message.Content,
                 destination = message.Destination

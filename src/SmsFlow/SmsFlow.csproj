@@ -4,10 +4,19 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageId>SmsFlow</PackageId>
+    <Version>0.1.0</Version>
     <Authors>SMSFlow</Authors>
     <Description>.NET client library for the SMSFlow HTTPS API.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/smsflow/smsflow-dotnet</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://docs.smsflow.co.za/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/SMSFlow-ZA/smsflow-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageTags>sms;sms-api;smsflow;notifications</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

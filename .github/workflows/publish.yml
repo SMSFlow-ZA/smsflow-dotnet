@@ -1,0 +1,22 @@
+name: Publish NuGet package
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet restore
+      - run: dotnet build --configuration Release --no-restore
+      - run: dotnet test tests/SmsFlow.Tests/SmsFlow.Tests.csproj --configuration Release --no-build
+      - run: dotnet pack src/SmsFlow/SmsFlow.csproj --configuration Release --no-build --output artifacts
+      - run: dotnet nuget push "artifacts/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key "${{ secrets.NUGET_API_KEY }}" --skip-duplicate
