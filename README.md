@@ -33,7 +33,8 @@ using SmsFlow;
 var client = new SmsFlowClient(new SmsFlowClientOptions
 {
     ClientId = Environment.GetEnvironmentVariable("SMSFLOW_CLIENT_ID")!,
-    ClientSecret = Environment.GetEnvironmentVariable("SMSFLOW_CLIENT_SECRET")!
+    ClientSecret = Environment.GetEnvironmentVariable("SMSFLOW_CLIENT_SECRET")!,
+    Timeout = TimeSpan.FromSeconds(30)
 });
 
 var response = await client.SendSmsAsync(new SendSmsRequest
@@ -84,9 +85,19 @@ try
         Messages = [new SmsMessage { Destination = "27000000000", Content = "Hello from SMSFlow." }]
     });
 }
+catch (SmsFlowAuthenticationException)
+{
+    Console.Error.WriteLine("Check your SMSFlow Client ID and Client Secret.");
+    throw;
+}
+catch (SmsFlowValidationException ex)
+{
+    Console.Error.WriteLine($"Fix the request before retrying. {ex.ErrorCode}: {ex.ResponseBody}");
+    throw;
+}
 catch (SmsFlowException ex)
 {
-    Console.Error.WriteLine($"{(int)ex.StatusCode}: {ex.ResponseBody}");
+    Console.Error.WriteLine($"{(int)ex.StatusCode}: {ex.ErrorCode}; retryable={ex.Retryable}; {ex.ResponseBody}");
     throw;
 }
 ```
@@ -103,7 +114,34 @@ builder.Services.AddHttpClient<SmsFlowClient>(client =>
 });
 ```
 
-Retry only temporary network failures and `5xx` responses. Do not retry validation errors, authentication failures, or insufficient-balance responses until the underlying issue has been fixed. Store the returned `eventId` against your own transaction or notification record.
+## Timeouts and retries
+
+```csharp
+var client = new SmsFlowClient(new SmsFlowClientOptions
+{
+    ClientId = Environment.GetEnvironmentVariable("SMSFLOW_CLIENT_ID")!,
+    ClientSecret = Environment.GetEnvironmentVariable("SMSFLOW_CLIENT_SECRET")!,
+    Timeout = TimeSpan.FromSeconds(30),
+    RetryCount = 2,
+    RetryBaseDelay = TimeSpan.FromMilliseconds(250),
+    RetryMaxDelay = TimeSpan.FromSeconds(2)
+});
+
+var balance = await client.GetBalanceAsync(); // Safe to retry temporary failures.
+
+await client.SendSmsAsync(new SendSmsRequest
+{
+    CampaignName = "Transactional SMS",
+    RetryTemporaryFailures = true, // Use only with your own idempotency or duplicate-send guard.
+    Messages = [new SmsMessage { Destination = "27000000000", Content = "Hello from SMSFlow." }]
+});
+```
+
+Retry only temporary network failures, `408`, `429`, and `5xx` responses. Do not retry validation errors, authentication failures, or insufficient-balance responses until the underlying issue has been fixed. Store the returned `eventId` against your own transaction or notification record.
+
+## Delivery status
+
+The public HTTPS API currently exposes authentication, send, and balance endpoints. Delivery-status helper methods will be added when a public delivery-status endpoint is available.
 
 ## Features
 
@@ -112,7 +150,8 @@ Retry only temporary network failures and `5xx` responses. Do not retry validati
 - Schedule SMS messages using UTC delivery time.
 - Respect opt-out checks by default.
 - Check account balance.
-- Raise structured exceptions when the API returns an error.
+- Raise typed structured exceptions when the API returns an error.
+- Configure timeouts and opt-in retries for temporary failures.
 
 ## Local test send
 

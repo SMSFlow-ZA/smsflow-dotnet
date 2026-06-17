@@ -5,6 +5,7 @@ public sealed class SendSmsRequest
     public string CampaignName { get; init; } = "SMSFlow API";
     public DateTimeOffset? StartDeliveryUtc { get; init; }
     public bool CheckOptOuts { get; init; } = true;
+    public bool RetryTemporaryFailures { get; init; }
     public IReadOnlyList<SmsMessage> Messages { get; init; } = [];
 }
 

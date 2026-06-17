@@ -4,7 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageId>SmsFlow</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>SMSFlow</Authors>
     <Description>.NET client library for the SMSFlow HTTPS API.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>

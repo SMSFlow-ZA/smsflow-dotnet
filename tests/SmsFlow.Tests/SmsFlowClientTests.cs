@@ -104,9 +104,79 @@ public sealed class SmsFlowClientTests
         Assert.Equal(42.50m, balance.Balance);
     }
 
-    private static HttpResponseMessage JsonResponse(object body)
+    [Fact]
+    public async Task SendSmsAsync_ThrowsTypedValidationError()
     {
-        return new HttpResponseMessage(HttpStatusCode.OK)
+        var handler = new RecordingHandler(request =>
+        {
+            if (request.RequestUri?.PathAndQuery == "/api/integration/authentication")
+            {
+                return JsonResponse(new { token = "token", expiresInMinutes = 120, schema = "Basic" });
+            }
+
+            if (request.RequestUri?.PathAndQuery == "/api/integration/BulkMessages")
+            {
+                return JsonResponse(
+                    new { statusCode = 400, errors = new[] { new { code = "INVALID_DESTINATION", message = "Invalid destination." } } },
+                    HttpStatusCode.BadRequest);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        });
+
+        var client = new SmsFlowClient(
+            new HttpClient(handler) { BaseAddress = new Uri("https://portal.smsflow.co.za/") },
+            new SmsFlowClientOptions { ClientId = "client-id", ClientSecret = "client-secret" });
+
+        var exception = await Assert.ThrowsAsync<SmsFlowValidationException>(() => client.SendSmsAsync(new SendSmsRequest
+        {
+            CampaignName = "Integration Test",
+            Messages =
+            [
+                new SmsMessage
+                {
+                    Destination = "not-a-number",
+                    Content = "Hello from SMSFlow"
+                }
+            ]
+        }));
+
+        Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
+        Assert.Equal("INVALID_DESTINATION", exception.ErrorCode);
+        Assert.False(exception.Retryable);
+    }
+
+    [Fact]
+    public async Task AuthenticateAsync_RetriesTemporaryServerFailures()
+    {
+        var calls = 0;
+        var handler = new RecordingHandler(_ =>
+        {
+            calls++;
+            return calls == 1
+                ? JsonResponse(new { errors = new[] { new { code = "SERVICE_UNAVAILABLE" } } }, HttpStatusCode.ServiceUnavailable)
+                : JsonResponse(new { token = "token", expiresInMinutes = 120, schema = "Basic" });
+        });
+
+        var client = new SmsFlowClient(
+            new HttpClient(handler) { BaseAddress = new Uri("https://portal.smsflow.co.za/") },
+            new SmsFlowClientOptions
+            {
+                ClientId = "client-id",
+                ClientSecret = "client-secret",
+                RetryCount = 1,
+                RetryBaseDelay = TimeSpan.Zero
+            });
+
+        var auth = await client.AuthenticateAsync();
+
+        Assert.Equal("token", auth.Token);
+        Assert.Equal(2, calls);
+    }
+
+    private static HttpResponseMessage JsonResponse(object body, HttpStatusCode statusCode = HttpStatusCode.OK)
+    {
+        return new HttpResponseMessage(statusCode)
         {
             Content = JsonContent.Create(body)
         };
