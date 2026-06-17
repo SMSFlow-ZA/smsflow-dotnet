@@ -1,0 +1,26 @@
+name: Package smoke test
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Publish NuGet package"]
+    types: [completed]
+
+jobs:
+  smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - id: package
+        run: |
+          version=$(grep -oPm1 "(?<=<Version>)[^<]+" src/SmsFlow/SmsFlow.csproj)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - run: |
+          dotnet new console -n SmsFlowSmoke
+          dotnet add SmsFlowSmoke package SmsFlow --version "${{ steps.package.outputs.version }}"
+          dotnet build SmsFlowSmoke --configuration Release
+

@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a problem with the SMSFlow .NET SDK.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SDK version
+      placeholder: 0.1.0
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Include a minimal server-side example without credentials.
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Do not include Client Secrets, bearer tokens, phone numbers, or customer data.
+
